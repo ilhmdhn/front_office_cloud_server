@@ -14,8 +14,26 @@ const loggerRequest = (req, res, next) =>{
     console.log(`Receive request ${req.method} ${req.originalUrl}`)
     next()
 }
+
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization']
+    const token = authHeader;
+    if (token == null) return res.sendStatus(401)
+  
+
+    if (token == process.env.TOKEN){
+        next()
+    }else{
+        res.status(401).send({
+            state: false,
+            data: null,
+            message: 'unauth'});
+    }
+}
+
 app.use(loggerRequest);
 app.use(bodyParser.json());
 app.use(bodyParser.raw());
 app.use(express.urlencoded({extended:false}));
+app.use(authenticateToken);
 app.use(userRoute);
