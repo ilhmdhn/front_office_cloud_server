@@ -5,6 +5,7 @@ module.exports = new Sequelize(process.env.DATABASE_NAME, process.env.DATABASE_U
     host: process.env.DATABASE_SERVER,
     port: process.env.DATABASE_PORT,
     dialect: 'mysql',
+    logging: false,
     dialectOptions: {
         connectTimeout: 3000,
         timezone: '+07:00',
