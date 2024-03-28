@@ -5,6 +5,7 @@ const path = require('path');
 require('dotenv').config({path: path.join(__dirname, '.env')});
 
 const userRoute = require('./src/router/user_router');
+const approvalRoute = require('./src/router/approval');
 
 app.listen(process.env.PORT, async()=>{
     console.log(`App Running on ${process.env.PORT} port`);
@@ -37,3 +38,4 @@ app.use(bodyParser.raw());
 app.use(express.urlencoded({extended:false}));
 app.use(authenticateToken);
 app.use(userRoute);
+app.use('/approval',approvalRoute);

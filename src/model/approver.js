@@ -2,10 +2,15 @@ const { DataTypes, Sequelize } = require('sequelize');
 const sqlz = require('../util/sqlz');
 
 module.exports = sqlz.define('user',{
+    id:{
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
     outlet:{
         type: DataTypes.STRING
     },
-    id:{
+    id_approval:{
         type: DataTypes.STRING
     },
     user:{

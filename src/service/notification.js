@@ -9,12 +9,13 @@ const sendNotif = () =>{
                 data: {
                     type: "1",
                     code: "aaa",
-                    Title: "Room PR A Memanggil",
-                    Message: "Tanggapi Response"
+                    Title: "KENEK",
+                    state: 'false',
+                    Message: "KENEKKENEKKENEK"
                 },
-                token: ''
+                tokens: ['']
             };
-            admin.messaging().send(message)
+            admin.messaging().sendMulticast(message)
             .then((response)=>{
                 console.log('BERHASIL '+response);
             })
