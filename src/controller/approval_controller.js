@@ -4,6 +4,24 @@ const {Op} = require('sequelize');
 const {getFirebaseAdmin} = require('../service/firebase');
 const responseFormat = require('../util/response_format');
 
+const approvalRequestCount = async(req, res)=>{
+    try {
+
+        const outlet = req.params.outlet;
+        const approvalData = await approvalTable.findAll({
+            where:{
+                outlet: outlet,
+                state: 1
+            },
+            raw: true
+        });
+
+        res.send(responseFormat(true, null, `${approvalData.length}`))
+    } catch (err) {
+        res.send(responseFormat(true, null, err.message))        
+    }
+}
+
 const requestApproval = async(req, res) =>{
     try {
         const outlet = req.body.outlet;
@@ -238,8 +256,14 @@ const cancelApproval = async(req, res)=>{
             raw: true
         });
 
+        if(updateState[0] == 0){
+            res.send(responseFormat(false, null, 'Permintaan tidak ada'));
+            return
+        }
+
+        res.send(responseFormat(true, null, 'Berhasil'))
     } catch (err) {
-        
+        res.send(responseFormat(false, null, err.message));
     }
 }
 
@@ -259,16 +283,53 @@ const finishApproval = async(req, res)=>{
             },
             raw: true
         });
+
+        if(updateState[0] == 0){
+            res.send(responseFormat(false, null, 'Permintaan tidak ada'));
+            return
+        }
+
+        res.send(responseFormat(true, null, 'Berhasil'))
     } catch (err) {
-        
+        res.send(responseFormat(false, null, err.message));
+    }
+}
+
+const timeoutApproval = async(req, res)=>{
+    try {
+        const outlet = req.params.outlet;
+        const id_approval = req.params.id_approval;
+
+        const updateState = await approvalTable.update({
+            state: 5
+        },
+        {
+            where:{
+                outlet: outlet,
+                state: 1,
+                id_approval: id_approval
+            },
+            raw: true
+        });
+
+        if(updateState[0] == 0){
+            res.send(responseFormat(false, null, 'Permintaan tidak ada'));
+            return
+        }
+
+        res.send(responseFormat(true, null, 'Berhasil'))
+    } catch (err) {
+        res.send(responseFormat(false, null, err.message));
     }
 }
 
 module.exports = {
+    approvalRequestCount,
     requestApproval,
     getApprovalRequest,
     confirmApproval,
     rejectApproval,
     cancelApproval,
-    finishApproval
+    finishApproval,
+    timeoutApproval
 }

@@ -16,7 +16,7 @@ const insertUserLogin = async(req, res) =>{
             level: user_level,
             token: token,
             device: device,
-            login_state: 1,
+            login_state: '1',
             last_login: sqlz.literal('now()')
         });
         res.send(responseFormat(true, null))
