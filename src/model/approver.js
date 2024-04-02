@@ -16,6 +16,9 @@ module.exports = sqlz.define('user',{
     user:{
         type: DataTypes.STRING
     },
+    room:{
+        type: DataTypes.STRING
+    },
     reception:{
         type: DataTypes.STRING
     },

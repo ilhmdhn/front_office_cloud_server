@@ -28,6 +28,7 @@ const requestApproval = async(req, res) =>{
         const id = req.body.id;
         const user = req.body.user;
         const reception = req.body.reception;
+        const room = req.body.room;
         const note = req.body.note;        
         let tokenList = [];
 
@@ -37,6 +38,7 @@ const requestApproval = async(req, res) =>{
             outlet: outlet,
             id_approval: id,
             user: user,
+            room: room,
             reception: reception,
             note: note,
             state: 1
@@ -213,7 +215,7 @@ const rejectApproval = async(req, res) =>{
                 type: "1",
                 code: id_approval,
                 state: 'false',
-                Title: "Permintaan ditolah",
+                Title: "Permintaan ditolak",
                 Message: `${approver} Menolak permintaan ${userData.id}`
             },
             token: userData.token
