@@ -3,6 +3,7 @@ const userTable = require('../model/user');
 const {Op} = require('sequelize');
 const {getFirebaseAdmin} = require('../service/firebase');
 const responseFormat = require('../util/response_format');
+const { Sequelize } = require('../util/sqlz');
 
 const approvalRequestCount = async(req, res)=>{
     try {
@@ -79,7 +80,7 @@ const requestApproval = async(req, res) =>{
         .catch((err)=>{
              console.log('GAGAL '+err)
         })
-    
+        refreshApproval(outlet);
         res.send(responseFormat(true, null));
     } catch (err) {
         res.send(responseFormat(false, null, err.message));
@@ -162,6 +163,7 @@ const confirmApproval = async(req, res) =>{
         .catch((err)=>{
             console.log('Gagal mengirim sinyal '+err.message);
         });
+        refreshApproval(outlet);
         res.send(responseFormat(true, null, 'Berhasil'))
     } catch (err) {
         res.send(responseFormat(false, null, err.message))
@@ -228,6 +230,8 @@ const rejectApproval = async(req, res) =>{
         .catch((err)=>{
             console.log('Gagal mengirim sinyal '+err.message);
         });
+
+        refreshApproval(outlet).
         res.send(responseFormat(true, null, 'Berhasil'))
     } catch (err) {
         console.log(`
@@ -263,6 +267,8 @@ const cancelApproval = async(req, res)=>{
             return
         }
 
+        refreshApproval(outlet);
+        
         res.send(responseFormat(true, null, 'Berhasil'))
     } catch (err) {
         res.send(responseFormat(false, null, err.message));
@@ -300,28 +306,62 @@ const finishApproval = async(req, res)=>{
 const timeoutApproval = async(req, res)=>{
     try {
         const outlet = req.params.outlet;
-        const id_approval = req.params.id_approval;
 
-        const updateState = await approvalTable.update({
-            state: 5
-        },
-        {
+        const approvalCount = await approvalTable.findOne({
+            attributes:[
+                [Sequelize.literal('IFNULL(COUNT(*),0)'), 'approval_count']
+            ],
             where:{
                 outlet: outlet,
-                state: 1,
-                id_approval: id_approval
+                state: 1
+            },
+            raw: true
+        });
+        console.log(approvalCount)
+        res.send(responseFormat(true, null, 'Berhasil'))
+    } catch (err) {
+        res.send(responseFormat(false, null, err.message));
+    }
+}
+
+const refreshApproval = async(outlet)=>{
+    try {
+        let tokenList = [];
+        const admin = getFirebaseAdmin();
+
+        const userApprove = await userTable.findAll({
+            where:{
+                [Op.or]: [
+                    { level: 'ACCOUNTING' },
+                    { level: 'SUPERVISOR' },
+                    { level: 'KAPTEN' },
+                  ],
+                outlet: outlet,
+                login_state: '1'
             },
             raw: true
         });
 
-        if(updateState[0] == 0){
-            res.send(responseFormat(false, null, 'Permintaan tidak ada'));
-            return
-        }
+        userApprove.forEach((item)=>{
+            tokenList.push(item.token)
+        });
+        console.log(tokenList)
+        const message = {
+            data: {
+                type: "3",
+            },
+            tokens: tokenList
+        };
 
-        res.send(responseFormat(true, null, 'Berhasil'))
+         admin.messaging().sendMulticast(message)
+        .then((response)=>{
+            //  console.log('BERHASIL '+response);
+        })
+        .catch((err)=>{
+             console.log('GAGAL '+err)
+        })
     } catch (err) {
-        res.send(responseFormat(false, null, err.message));
+        console.log('Fail send approval refresher '+err.message);
     }
 }
 
