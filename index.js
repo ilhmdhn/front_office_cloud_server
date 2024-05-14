@@ -6,6 +6,7 @@ require('dotenv').config({path: path.join(__dirname, '.env')});
 
 const userRoute = require('./src/router/user_router');
 const approvalRoute = require('./src/router/approval');
+const transactionRoute = require('./src/router/transaction');
 
 app.listen(process.env.PORT, async()=>{
     console.log(`App Running on ${process.env.PORT} port`);
@@ -39,3 +40,4 @@ app.use(express.urlencoded({extended:false}));
 app.use(authenticateToken);
 app.use(userRoute);
 app.use('/approval',approvalRoute);
+app.use('/transaction',transactionRoute);
