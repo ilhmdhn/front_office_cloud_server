@@ -44,6 +44,36 @@ const insertRating = async(req, res) =>{
     }
 }
 
+const ratedCheck = async(req, res) =>{
+    try {
+        const inv = req.params.invoice;
+        const outlet = req.params.outlet;
+        
+        const isRated = await ratingTable.findOne({
+            where:{
+                outlet: outlet,
+                invoice: inv
+            },
+            raw: true
+        });
+
+        if(isRated){
+            res.send(responseFormat(false, null))            
+        }else{
+            res.send(responseFormat(true, null))
+        }
+    } catch (err) {
+        res.status(500).send(responseFormat(false, null ,err.message))
+        console.error(`
+        insertRating
+            err: ${err}
+            message: ${err.message}
+            stack: ${err.stack}
+        `)
+    }
+}
+
 module.exports = {
-    insertRating
+    insertRating,
+    ratedCheck
 }
