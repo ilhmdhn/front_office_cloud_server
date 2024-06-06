@@ -12,6 +12,11 @@ const insertRating = async(req, res) =>{
         const rate = req.body.rate;
         const reason = req.body.reason;
         const microseconds = (moment().valueOf() * 1000).toString();
+
+        if(!rate || rate<1){
+            res.send(responseFormat(true, null));
+            return;
+        }
         
         const memberData = await memberTable.findOne({
             where:{

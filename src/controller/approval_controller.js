@@ -361,7 +361,29 @@ const refreshApproval = async(outlet)=>{
              console.log('GAGAL '+err)
         })
     } catch (err) {
+        res.send(responseFormat(false, null, err.message));
         console.log('Fail send approval refresher '+err.message);
+    }
+}
+
+const stateApproval = async(req, res) =>{
+    try {
+
+        const outlet = req.query.outlet;
+        const id = req.query.id_approval;
+
+
+        const approvalRequest = await approvalTable.findOne({
+            where:{
+              outlet: outlet,
+              id_approval: id
+            },
+            raw: true
+        });
+
+        res.send(responseFormat(true, null, `${approvalRequest.state}`));
+    } catch (err) {
+        res.send(responseFormat(false, null, err.message));
     }
 }
 
@@ -373,5 +395,6 @@ module.exports = {
     rejectApproval,
     cancelApproval,
     finishApproval,
-    timeoutApproval
+    timeoutApproval,
+    stateApproval
 }
