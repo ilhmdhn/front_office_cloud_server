@@ -58,9 +58,16 @@ const requestApproval = async(req, res) =>{
             raw: true
         });
 
+        if(userApprove.length < 1){
+            res.send(responseFormat(false, null, 'Tidak ada user spv/ kapten yang login'));
+            return;
+        }
+
         userApprove.forEach((item)=>{
             tokenList.push(item.token)
         });
+
+
         console.log(tokenList)
         const message = {
             data: {
