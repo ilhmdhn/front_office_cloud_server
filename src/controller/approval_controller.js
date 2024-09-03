@@ -401,7 +401,7 @@ const addNote = async (req, res) => {
     try {
         const outlet = req.params.outlet;
         const id_approval = req.params.id_approval;
-        const reason = req.boy.reason;
+        const reason = req.body.reason;
 
         await approvalTable.update(
             {
