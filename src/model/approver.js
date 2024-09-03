@@ -1,36 +1,39 @@
 const { DataTypes, Sequelize } = require('sequelize');
 const sqlz = require('../util/sqlz');
 
-module.exports = sqlz.define('user',{
-    id:{
+module.exports = sqlz.define('user', {
+    id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
-    outlet:{
+    outlet: {
         type: DataTypes.STRING
     },
-    id_approval:{
+    id_approval: {
         type: DataTypes.STRING
     },
-    user:{
+    user: {
         type: DataTypes.STRING
     },
-    room:{
+    room: {
         type: DataTypes.STRING
     },
-    reception:{
+    reception: {
         type: DataTypes.STRING
     },
-    note:{
+    note: {
         type: DataTypes.STRING
     },
-    state:{
+    state: {
         type: DataTypes.STRING
     },
-    approver:{
+    reason: {
+        type: DataTypes.STRING(1000)
+    },
+    approver: {
         type: DataTypes.STRING
     }
-},{
+}, {
     tableName: 'approver'
 });

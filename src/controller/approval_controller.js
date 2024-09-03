@@ -1,16 +1,17 @@
 const approvalTable = require('../model/approver');
 const userTable = require('../model/user');
-const {Op} = require('sequelize');
-const {getFirebaseAdmin} = require('../service/firebase');
+const { Op } = require('sequelize');
+const { getFirebaseAdmin } = require('../service/firebase');
 const responseFormat = require('../util/response_format');
 const { Sequelize } = require('../util/sqlz');
+const response_format = require('../util/response_format');
 
-const approvalRequestCount = async(req, res)=>{
+const approvalRequestCount = async (req, res) => {
     try {
 
         const outlet = req.params.outlet;
         const approvalData = await approvalTable.findAll({
-            where:{
+            where: {
                 outlet: outlet,
                 state: 1
             },
@@ -19,18 +20,18 @@ const approvalRequestCount = async(req, res)=>{
 
         res.send(responseFormat(true, null, `${approvalData.length}`))
     } catch (err) {
-        res.send(responseFormat(true, null, err.message))        
+        res.send(responseFormat(true, null, err.message))
     }
 }
 
-const requestApproval = async(req, res) =>{
+const requestApproval = async (req, res) => {
     try {
         const outlet = req.body.outlet;
         const id = req.body.id;
         const user = req.body.user;
         const reception = req.body.reception;
         const room = req.body.room;
-        const note = req.body.note;        
+        const note = req.body.note;
         let tokenList = [];
 
         const admin = getFirebaseAdmin();
@@ -46,29 +47,27 @@ const requestApproval = async(req, res) =>{
         });
 
         const userApprove = await userTable.findAll({
-            where:{
+            where: {
                 [Op.or]: [
                     { level: 'ACCOUNTING' },
                     { level: 'SUPERVISOR' },
                     { level: 'KAPTEN' },
-                  ],
+                ],
                 outlet: outlet,
                 login_state: '1'
             },
             raw: true
         });
 
-        if(userApprove.length < 1){
+        if (userApprove.length < 1) {
             res.send(responseFormat(false, null, 'Tidak ada user spv/ kapten yang login'));
             return;
         }
 
-        userApprove.forEach((item)=>{
+        userApprove.forEach((item) => {
             tokenList.push(item.token)
         });
 
-
-        console.log(tokenList)
         const message = {
             data: {
                 type: "2",
@@ -80,13 +79,13 @@ const requestApproval = async(req, res) =>{
             tokens: tokenList
         };
 
-         admin.messaging().sendMulticast(message)
-        .then((response)=>{
-            //  console.log('BERHASIL '+response);
-        })
-        .catch((err)=>{
-             console.log('GAGAL '+err)
-        })
+        admin.messaging().sendMulticast(message)
+            .then((response) => {
+                //  console.log('BERHASIL '+response);
+            })
+            .catch((err) => {
+                console.log('GAGAL ' + err)
+            })
         refreshApproval(outlet);
         res.send(responseFormat(true, null));
     } catch (err) {
@@ -94,12 +93,12 @@ const requestApproval = async(req, res) =>{
     }
 }
 
-const getApprovalRequest = async(req, res) =>{
+const getApprovalRequest = async (req, res) => {
     try {
         const outlet = req.query.outlet;
 
         const approvalData = await approvalTable.findAll({
-            where:{
+            where: {
                 outlet: outlet,
                 state: 1
             },
@@ -112,7 +111,7 @@ const getApprovalRequest = async(req, res) =>{
     }
 }
 
-const confirmApproval = async(req, res) =>{
+const confirmApproval = async (req, res) => {
     try {
         const outlet = req.params.outlet;
         const id_approval = req.params.id_approval;
@@ -122,28 +121,28 @@ const confirmApproval = async(req, res) =>{
             state: 2,
             approver: approver
         },
-        {
-            where:{
-                outlet: outlet,
-                state: 1,
-                id_approval: id_approval
-            },
-            raw: true
-        });
-        if(updateState[0] == 0){
+            {
+                where: {
+                    outlet: outlet,
+                    state: 1,
+                    id_approval: id_approval
+                },
+                raw: true
+            });
+        if (updateState[0] == 0) {
             res.send(responseFormat(false, null, 'Permintaan tidak ada'));
             return
         }
         const approvalRequest = await approvalTable.findOne({
-            where:{
-              outlet: outlet,
-              id_approval: id_approval
+            where: {
+                outlet: outlet,
+                id_approval: id_approval
             },
             raw: true
         });
 
         const userData = await userTable.findOne({
-            where:{
+            where: {
                 outlet: outlet,
                 id: approvalRequest.user
             },
@@ -164,12 +163,12 @@ const confirmApproval = async(req, res) =>{
         };
 
         admin.messaging().send(message)
-        .then((response)=>{
-            //do nothing
-        })
-        .catch((err)=>{
-            console.log('Gagal mengirim sinyal '+err.message);
-        });
+            .then((response) => {
+                //do nothing
+            })
+            .catch((err) => {
+                console.log('Gagal mengirim sinyal ' + err.message);
+            });
         refreshApproval(outlet);
         res.send(responseFormat(true, null, 'Berhasil'))
     } catch (err) {
@@ -177,7 +176,7 @@ const confirmApproval = async(req, res) =>{
     }
 }
 
-const rejectApproval = async(req, res) =>{
+const rejectApproval = async (req, res) => {
     try {
         const outlet = req.params.outlet;
         const id_approval = req.params.id_approval;
@@ -187,30 +186,30 @@ const rejectApproval = async(req, res) =>{
             state: 3,
             approver: approver
         },
-        {
-            where:{
+            {
+                where: {
+                    outlet: outlet,
+                    state: 1,
+                    id_approval: id_approval
+                },
+                raw: true
+            });
+
+        if (updateState[0] == 0) {
+            res.send(responseFormat(false, null, 'Permintaan tidak ada'));
+            return
+        }
+
+        const approvalRequest = await approvalTable.findOne({
+            where: {
                 outlet: outlet,
-                state: 1,
                 id_approval: id_approval
             },
             raw: true
         });
 
-        if(updateState[0] == 0){
-            res.send(responseFormat(false, null, 'Permintaan tidak ada'));
-            return
-        }
-        
-        const approvalRequest = await approvalTable.findOne({
-            where:{
-              outlet: outlet,
-              id_approval: id_approval
-            },
-            raw: true
-        });
-
         const userData = await userTable.findOne({
-            where:{
+            where: {
                 outlet: outlet,
                 id: approvalRequest.user
             },
@@ -231,15 +230,15 @@ const rejectApproval = async(req, res) =>{
         };
 
         admin.messaging().send(message)
-        .then((response)=>{
-            //do nothing
-        })
-        .catch((err)=>{
-            console.log('Gagal mengirim sinyal '+err.message);
-        });
+            .then((response) => {
+                //do nothing
+            })
+            .catch((err) => {
+                console.log('Gagal mengirim sinyal ' + err.message);
+            });
 
         refreshApproval(outlet).
-        res.send(responseFormat(true, null, 'Berhasil'))
+            res.send(responseFormat(true, null, 'Berhasil'))
     } catch (err) {
         console.log(`
             reject approval error
@@ -251,38 +250,38 @@ const rejectApproval = async(req, res) =>{
     }
 }
 
-const cancelApproval = async(req, res)=>{
+const cancelApproval = async (req, res) => {
     try {
-        
+
         const outlet = req.params.outlet;
         const id_approval = req.params.id_approval;
 
         const updateState = await approvalTable.update({
             state: 0,
         },
-        {
-            where:{
-                outlet: outlet,
-                state: 1,
-                id_approval: id_approval
-            },
-            raw: true
-        });
+            {
+                where: {
+                    outlet: outlet,
+                    state: 1,
+                    id_approval: id_approval
+                },
+                raw: true
+            });
 
-        if(updateState[0] == 0){
+        if (updateState[0] == 0) {
             res.send(responseFormat(false, null, 'Permintaan tidak ada'));
             return
         }
 
         refreshApproval(outlet);
-        
+
         res.send(responseFormat(true, null, 'Berhasil'))
     } catch (err) {
         res.send(responseFormat(false, null, err.message));
     }
 }
 
-const finishApproval = async(req, res)=>{
+const finishApproval = async (req, res) => {
     try {
         const outlet = req.params.outlet;
         const id_approval = req.params.id_approval;
@@ -290,16 +289,16 @@ const finishApproval = async(req, res)=>{
         const updateState = await approvalTable.update({
             state: 4
         },
-        {
-            where:{
-                outlet: outlet,
-                state: 2,
-                id_approval: id_approval
-            },
-            raw: true
-        });
+            {
+                where: {
+                    outlet: outlet,
+                    state: 2,
+                    id_approval: id_approval
+                },
+                raw: true
+            });
 
-        if(updateState[0] == 0){
+        if (updateState[0] == 0) {
             res.send(responseFormat(false, null, 'Permintaan tidak ada'));
             return
         }
@@ -310,15 +309,15 @@ const finishApproval = async(req, res)=>{
     }
 }
 
-const timeoutApproval = async(req, res)=>{
+const timeoutApproval = async (req, res) => {
     try {
         const outlet = req.params.outlet;
 
         const approvalCount = await approvalTable.findOne({
-            attributes:[
+            attributes: [
                 [Sequelize.literal('IFNULL(COUNT(*),0)'), 'approval_count']
             ],
-            where:{
+            where: {
                 outlet: outlet,
                 state: 1
             },
@@ -331,28 +330,32 @@ const timeoutApproval = async(req, res)=>{
     }
 }
 
-const refreshApproval = async(outlet)=>{
+const refreshApproval = async (outlet) => {
     try {
         let tokenList = [];
         const admin = getFirebaseAdmin();
 
         const userApprove = await userTable.findAll({
-            where:{
+            where: {
                 [Op.or]: [
                     { level: 'ACCOUNTING' },
                     { level: 'SUPERVISOR' },
                     { level: 'KAPTEN' },
-                  ],
+                ],
                 outlet: outlet,
                 login_state: '1'
             },
             raw: true
         });
 
-        userApprove.forEach((item)=>{
+        if (userApprove.length < 1) {
+            return;
+        }
+
+        userApprove.forEach((item) => {
             tokenList.push(item.token)
         });
-        console.log(tokenList)
+
         const message = {
             data: {
                 type: "3",
@@ -360,20 +363,20 @@ const refreshApproval = async(outlet)=>{
             tokens: tokenList
         };
 
-         admin.messaging().sendMulticast(message)
-        .then((response)=>{
-            //  console.log('BERHASIL '+response);
-        })
-        .catch((err)=>{
-             console.log('GAGAL '+err)
-        })
+        admin.messaging().sendMulticast(message)
+            .then((response) => {
+                //  console.log('BERHASIL '+response);
+            })
+            .catch((err) => {
+                console.log('GAGAL ' + err)
+            })
     } catch (err) {
         res.send(responseFormat(false, null, err.message));
-        console.log('Fail send approval refresher '+err.message);
+        console.log('Fail send approval refresher ' + err.message);
     }
 }
 
-const stateApproval = async(req, res) =>{
+const stateApproval = async (req, res) => {
     try {
 
         const outlet = req.query.outlet;
@@ -381,14 +384,80 @@ const stateApproval = async(req, res) =>{
 
 
         const approvalRequest = await approvalTable.findOne({
-            where:{
-              outlet: outlet,
-              id_approval: id
+            where: {
+                outlet: outlet,
+                id_approval: id
             },
             raw: true
         });
 
         res.send(responseFormat(true, null, `${approvalRequest.state}`));
+    } catch (err) {
+        res.send(responseFormat(false, null, err.message));
+    }
+}
+
+const addNote = async (req, res) => {
+    try {
+        const outlet = req.params.outlet;
+        const id_approval = req.params.id_approval;
+        const reason = req.boy.reason;
+
+        await approvalTable.update(
+            {
+                reason: reason
+            },
+            {
+                where: {
+                    outlet: outlet,
+                    state: 1,
+                    id_approval: id_approval
+                },
+                raw: true
+            }
+        );
+        res.send(response_format(true, null, reason));
+        refreshApproval(outlet);
+        /*
+        let tokenList = [];
+        const admin = getFirebaseAdmin();
+        const userApprove = await userTable.findAll({
+            where: {
+                [Op.or]: [
+                    { level: 'ACCOUNTING' },
+                    { level: 'SUPERVISOR' },
+                    { level: 'KAPTEN' },
+                ],
+                outlet: outlet,
+                login_state: '1'
+            },
+            raw: true
+        });
+
+        if (userApprove.length < 1) {
+            return;
+        }
+
+        userApprove.forEach((item) => {
+            tokenList.push(item.token)
+        });
+
+        const message = {
+            data: {
+                type: "4",
+
+            },
+            tokens: tokenList
+        };
+
+        admin.messaging().sendMulticast(message)
+            .then((response) => {
+                //  console.log('BERHASIL '+response);
+            })
+            .catch((err) => {
+                console.log('GAGAL ' + err)
+            })*/
+
     } catch (err) {
         res.send(responseFormat(false, null, err.message));
     }
@@ -403,5 +472,6 @@ module.exports = {
     cancelApproval,
     finishApproval,
     timeoutApproval,
-    stateApproval
+    stateApproval,
+    addNote
 }
